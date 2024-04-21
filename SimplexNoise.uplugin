@@ -1,25 +1,22 @@
 {
-	"PluginFileVersion" : 1,
-
-	"FriendlyName" : "Simplex Noise",
+	"FileVersion" : 3,
 	"Version" : 1,
-	"VersionName" : "1.2.0",
-	"CreatedBy" : "DevDad", 
-	"CreatedByURL" : "https://art-and-code.com/",
-	"EngineVersion":"4.25",
-	"Description" : "SimplexNoise Blueprint Library to use in Unreal Engine 4",
-	"Category" : "ArtAndCodeSuite.SimplexNoise",
+	"VersionName": "1.3.0",
+	"FriendlyName" : "Simplex Noise",
+	"Description" : "Clean, fast, modern and free Simplex Noise Library",
+	"Category" : "Other",
+	"CreatedBy": "Afan Olovcic",
+	"CreatedByURL" : "https://github.com/Solessfir/SimplexNoise",
 	"EnabledByDefault" : true,
-	
+	"CanContainContent" : false,
+	"IsBetaVersion" : false,
+	"Installed" : false,
 	"Modules" :
-	[		
+	[
 		{
 			"Name" : "SimplexNoise",
 			"Type" : "Runtime",
-			"LoadingPhase" : "PreDefault",
-			"WhitelistPlatforms" : [ "Win64", "Win32", "Mac", "Linux" ]
-		},
-
-		
+			"LoadingPhase" : "PreDefault"
+		}
 	]
 }
