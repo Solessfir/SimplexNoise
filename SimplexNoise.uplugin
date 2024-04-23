@@ -5,7 +5,7 @@
 	"FriendlyName" : "Simplex Noise",
 	"Description" : "Clean, fast, modern and free Simplex Noise Library",
 	"Category" : "Other",
-	"CreatedBy": "Afan Olovcic",
+	"CreatedBy": "Afan Olovcic, Solessfir",
 	"CreatedByURL" : "https://github.com/Solessfir/SimplexNoise",
 	"EnabledByDefault" : true,
 	"CanContainContent" : false,
