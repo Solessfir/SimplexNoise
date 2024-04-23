@@ -155,7 +155,7 @@ namespace
 	
 	constexpr double RecomputeRange(const double Value, const double MaxRange, const double MinRange)
 	{
-		return (Value + 1.0) * 0.5f * (FMath::Max(MaxRange, MinRange + 1.0) - MinRange) + MinRange;
+		return (Value + 1.0) * 0.5f * (FMath::Max<double>(MaxRange, MinRange + 1.0) - MinRange) + MinRange;
 	}
 }
 
