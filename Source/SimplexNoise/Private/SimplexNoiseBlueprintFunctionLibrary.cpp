@@ -186,7 +186,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise1D_FBM(const double X,
 	double Frequency = 1.0;
 	double Amplitude = 1.0;
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_KINDA_SMALL_NUMBER);
+	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
 	const int32 ClampedOctaves = FMath::Max<int32>(Octaves, 1);
 	
 	for (int32 Index = 0; Index < ClampedOctaves; ++Index)
@@ -207,7 +207,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_FBM(const double X,
 	double Frequency = 1.0;
 	double Amplitude = 1.0;
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_KINDA_SMALL_NUMBER);
+	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
 	const int32 ClampedOctaves = FMath::Max<int32>(Octaves, 1);
 	
 	for (int32 Index = 0; Index < ClampedOctaves; ++Index)
@@ -228,7 +228,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise3D_FBM(const double X,
 	double Frequency = 1.0;
 	double Amplitude = 1.0;
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_KINDA_SMALL_NUMBER);
+	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
 	const int32 ClampedOctaves = FMath::Max<int32>(Octaves, 1);
 	
 	for (int32 Index = 0; Index < ClampedOctaves; ++Index)
@@ -249,7 +249,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise4D_FBM(const double X,
 	double Frequency = 1.0;
 	double Amplitude = 1.0;
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_KINDA_SMALL_NUMBER);
+	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
 	const int32 ClampedOctaves = FMath::Max<int32>(Octaves, 1);
 	
 	for (int32 Index = 0; Index < ClampedOctaves; ++Index)
