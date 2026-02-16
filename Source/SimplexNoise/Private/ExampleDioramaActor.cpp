@@ -91,8 +91,12 @@ void AExampleDioramaActor::GenerateDiorama()
 	const int32 SizeY = FMath::Max(DioramaSize.Y, 4);
 	const int32 SizeZ = FMath::Max(DioramaSize.Z, 4);
 
-	// Seed the noise generator. This affects all subsequent noise calls on this thread
-	// The seed is per-thread, so editor and game threads are independent
+	/**
+	* STEP 1: SEED
+	*
+	* Seed the noise generator. This affects all subsequent noise calls on this thread.
+	* The seed is per-thread, so editor and game threads are independent.
+	*/
 	USimplexNoiseBlueprintFunctionLibrary::SetSimplexNoiseSeed(NoiseSeed);
 
 	// Pre-calculate valid height range
