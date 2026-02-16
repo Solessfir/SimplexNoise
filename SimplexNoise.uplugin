@@ -1,12 +1,13 @@
 {
 	"FileVersion" : 3,
-	"Version" : 1,
-	"VersionName": "1.3.0",
+	"Version" : 2,
+	"VersionName" : "2.0.0",
 	"FriendlyName" : "Simplex Noise",
-	"Description" : "Clean, fast, modern and free Simplex Noise Library",
-	"Category" : "Other",
-	"CreatedBy": "Afan Olovcic, Solessfir",
+	"Description" : "Simplex Noise 1D-4D with Fractional Brownian Motion, per-thread seeding, and a C++ batch API with AVX+FMA SIMD acceleration.",
+	"Category" : "Math",
+	"CreatedBy" : "Afan Olovcic, Solessfir",
 	"CreatedByURL" : "https://github.com/Solessfir/SimplexNoise",
+	"DocsURL" : "https://github.com/Solessfir/SimplexNoise#readme",
 	"EnabledByDefault" : true,
 	"CanContainContent" : false,
 	"IsBetaVersion" : false,
@@ -16,7 +17,7 @@
 		{
 			"Name" : "SimplexNoise",
 			"Type" : "Runtime",
-			"LoadingPhase" : "PreDefault"
+			"LoadingPhase" : "Default"
 		}
 	]
 }
