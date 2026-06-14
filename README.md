@@ -4,13 +4,9 @@ Simplex Noise plugin for Unreal Engine 5 that provides 1D - 4D noise and Fractio
 
 Originally created by **DevDad** (Afan Olovcic). Extended by **Solessfir**.
 
----
-
 ## Installation
 
 Get `SimplexNoise.zip` from the [releases](https://github.com/Solessfir/SimplexNoise/releases) and extract it into your project's `Plugins` folder.
-
----
 
 ## Features
 
@@ -23,15 +19,11 @@ Get `SimplexNoise.zip` from the [releases](https://github.com/Solessfir/SimplexN
 - **Blueprint-native** - all scalar functions are Blueprint Pure nodes with sensible defaults and clean category organisation
 - **Biome Diorama example** - a fully documented tutorial `AActor` that builds a voxel biome scene with caves, beaches, and snow peaks to showcase the noise functions in practice
 
----
-
 ## Screenshots
 
 ![Example Screenshot](Resources/Screenshot_1.png)
 
 ![Functions Screenshot](Resources/Screenshot_2.png)
-
----
 
 ## Blueprint Functions
 
@@ -77,8 +69,6 @@ USimplexNoiseBlueprintFunctionLibrary::SetSimplexNoiseSeed(42);
 
 Re-seeds the permutation table for the calling thread using a Fisher-Yates shuffle. Call this on every thread that needs a non-default seed. The default permutation is Ken Perlin's original 1983 table.
 
----
-
 ## C++ Batch API
 
 For high-performance use cases (terrain generation, texture baking, large point clouds), the batch functions avoid the per-call overhead of the Blueprint nodes and enable SIMD processing.
@@ -117,8 +107,6 @@ USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_Batch(
 
 AVX + FMA support is checked at runtime on the first call and cached, so there is no repeated overhead. The `__attribute__((target("avx,fma")))` attribute on the SIMD kernel means AVX instructions are isolated to that one function - no project-wide `-mavx` flag is required.
 
----
-
 ## Example Content
 
 ### `ExampleDioramaActor`
@@ -141,7 +129,7 @@ A tutorial `AActor` that procedurally builds a small voxel biome scene made of 1
 | `SimplexNoise2D` (offset) | Biome blend - a second low-frequency map shifts surface blocks between grass, sand, and snow |
 | `SimplexNoise3D_FBM` | Cave carving - voxels below the surface are removed wherever this value exceeds a threshold |
 
-All blocks of the same type are batched into a single `UInstancedStaticMeshComponent`, so a full 32 × 32 × 24 diorama (~8 000 visible blocks) renders in only as many draw calls as there are distinct block types.
+All blocks of the same type are batched into a single `UInstancedStaticMeshComponent`, so a full 32 x 32 x 24 diorama (~8 000 visible blocks) renders in only as many draw calls as there are distinct block types.
 
 Exposed parameters to experiment with:
 
@@ -154,8 +142,6 @@ Exposed parameters to experiment with:
 | `CaveCeilingZ` | How deep caves are allowed to reach toward the surface |
 | `SeaLevel` / `BeachWidth` | Controls where sand appears near low-lying terrain |
 | `SnowAltitude` | How high terrain needs to be before snow appears |
-
----
 
 ## Credits and References
 
