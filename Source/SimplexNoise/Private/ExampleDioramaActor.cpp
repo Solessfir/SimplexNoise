@@ -34,8 +34,8 @@
 *   Solid, non-cave blocks are assigned a Role based on:
 *     - Is this the topmost block in the column? -> Surface / Sand / Snow
 *     - Is this within SubsurfaceDepth of the top?  -> Subsurface
-*     - Everything else?                            -> Deep
-*     - Is this block exposed to a cave above it?   -> CaveWall (optional)
+*     - Is this deep block beside a carved cave? -> CaveWall (optional)
+*     - Everything else? -> Deep
 *
 * Step 6 - Instancing
 *   Each block role maps to an entry in the BlockTypes array which has a
@@ -64,6 +64,8 @@ void AExampleDioramaActor::BeginPlay()
 
 void AExampleDioramaActor::ClearDiorama()
 {
+	Modify();
+
 	// Destroy all ISMC components that were created during the last generation pass
 	for (UInstancedStaticMeshComponent* Component : BlockComponents)
 	{
@@ -103,6 +105,47 @@ void AExampleDioramaActor::GenerateDiorama()
 	// We clamp the max to one below SizeZ so there is always at least one air block above the tallest column, which keeps the diorama open at the top
 	const int32 ClampedHeightMin = FMath::Clamp(TerrainHeightMin, 1, SizeZ - 1);
 	const int32 ClampedHeightMax = FMath::Clamp(TerrainHeightMax, ClampedHeightMin + 1, SizeZ - 1);
+	const int32 CaveHeight = FMath::Clamp(CaveCeilingZ, 0, SizeZ);
+	const int64 ColumnCount = static_cast<int64>(SizeX) * SizeY;
+	if (ColumnCount > MAX_int32 || (CaveHeight > 0 && ColumnCount > MAX_int32 / CaveHeight))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BiomeDioramaActor: Diorama dimensions exceed the supported cave grid size."));
+		return;
+	}
+
+	TArray<int32> ColumnHeights;
+	ColumnHeights.SetNumUninitialized(static_cast<int32>(ColumnCount));
+	TBitArray<> CaveVoxels(false, static_cast<int32>(ColumnCount * CaveHeight));
+
+	// Cache only carved cells so neighboring terrain and exterior air remain distinct.
+	for (int32 GridX = 0; GridX < SizeX; ++GridX)
+	{
+		for (int32 GridY = 0; GridY < SizeY; ++GridY)
+		{
+			const int32 ColumnIndex = GridX * SizeY + GridY;
+			const double HeightNoise = USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_FBM(
+				static_cast<double>(GridX), static_cast<double>(GridY), TerrainScale,
+				TerrainOctaves, TerrainLacunarity, TerrainPersistence,
+				static_cast<double>(ClampedHeightMin), static_cast<double>(ClampedHeightMax));
+			const int32 ColumnHeight = FMath::RoundToInt(HeightNoise);
+			ColumnHeights[ColumnIndex] = ColumnHeight;
+
+			for (int32 GridZ = 0; GridZ < FMath::Min(ColumnHeight, CaveHeight); ++GridZ)
+			{
+				const double CaveNoise = USimplexNoiseBlueprintFunctionLibrary::SimplexNoise3D_FBM(
+					static_cast<double>(GridX), static_cast<double>(GridY), static_cast<double>(GridZ),
+					CaveScale, CaveOctaves, 2.0, 0.5, 0.0, 1.0);
+				CaveVoxels[ColumnIndex * CaveHeight + GridZ] = CaveNoise > CaveThreshold;
+			}
+		}
+	}
+
+	const auto IsCave = [&](const int32 GridX, const int32 GridY, const int32 GridZ)
+	{
+		return GridX >= 0 && GridX < SizeX && GridY >= 0 && GridY < SizeY && GridZ >= 0 && GridZ < CaveHeight
+			&& CaveVoxels[(GridX * SizeY + GridY) * CaveHeight + GridZ];
+	};
+	const bool bHasCaveWall = FindBlockIndexByRole(EBiomeBlockRole::CaveWall) != INDEX_NONE;
 
 	// Create one ISMC per block type entry.
 	// Blocks with no mesh assigned are skipped during instance placement (role still resolves, mesh just does not appear)
@@ -128,7 +171,7 @@ void AExampleDioramaActor::GenerateDiorama()
 
 		// Register and attach the new component so it is part of the actor
 		ISMC->RegisterComponent();
-		ISMC->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		ISMC->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 		BlockComponents[TypeIndex] = ISMC;
 	}
@@ -137,10 +180,10 @@ void AExampleDioramaActor::GenerateDiorama()
 	* GENERATION LOOP
 	*
 	* We iterate over every column (X, Y) in the diorama. For each column we:
-	*   1. Sample 2D FBM noise to get the terrain height for that column.
+	*   1. Read the cached terrain height for that column.
 	*   2. Sample the biome blend noise to decide surface block appearance.
 	*   3. Walk vertically from Z = 0 up to the column height.
-	*   4. For each solid voxel, sample 3D cave noise to decide if it is hollow.
+	*   4. Read the cached cave mask to decide if each voxel is hollow.
 	*   5. Assign a block role and add an instance to the matching ISMC.
 	*/
 	for (int32 GridX = 0; GridX < SizeX; ++GridX)
@@ -151,24 +194,14 @@ void AExampleDioramaActor::GenerateDiorama()
 			* STEP 2: HEIGHTMAP
 			*
 			* SimplexNoise2D_FBM returns a value in [MinRange, MaxRange].
-			* We pass our height limits directly as the range so the output
+			* The cached height uses our height limits directly as the range so the output
 			* is already in block units - no manual remapping needed.
 			*
 			* TerrainScale controls the spatial frequency. Smaller values
 			* zoom the noise out, making features broader. The X and Y
 			* coordinates are passed in block units; the scale handles the rest.
 			*/
-			const double HeightNoise = USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_FBM(
-				static_cast<double>(GridX),
-				static_cast<double>(GridY),
-				TerrainScale,
-				TerrainOctaves,
-				TerrainLacunarity,
-				TerrainPersistence,
-				static_cast<double>(ClampedHeightMin),
-				static_cast<double>(ClampedHeightMax));
-
-			const int32 ColumnHeight = FMath::RoundToInt(HeightNoise);
+			const int32 ColumnHeight = ColumnHeights[GridX * SizeY + GridY];
 
 			/**
 			* STEP 3: BIOME BLEND
@@ -212,23 +245,11 @@ void AExampleDioramaActor::GenerateDiorama()
 				* Smaller scale = more open cave systems.
 				* Larger scale = tighter, craggier tunnels.
 				*/
-				bool bIsCave = false;
-
-				if (GridZ < CaveCeilingZ)
-				{
-					const double CaveNoise = USimplexNoiseBlueprintFunctionLibrary::SimplexNoise3D_FBM(
-						static_cast<double>(GridX),
-						static_cast<double>(GridY),
-						static_cast<double>(GridZ),
-						CaveScale,
-						CaveOctaves,
-						2.0,
-						0.5,
-						0.0,
-						1.0);
-
-					bIsCave = (CaveNoise > CaveThreshold);
-				}
+				const bool bIsCave = IsCave(GridX, GridY, GridZ);
+				const bool bIsCaveWall = bHasCaveWall && !bIsCave && ColumnHeight - 1 - GridZ > SubsurfaceDepth
+					&& (IsCave(GridX - 1, GridY, GridZ) || IsCave(GridX + 1, GridY, GridZ)
+						|| IsCave(GridX, GridY - 1, GridZ) || IsCave(GridX, GridY + 1, GridZ)
+						|| IsCave(GridX, GridY, GridZ - 1) || IsCave(GridX, GridY, GridZ + 1));
 
 				/**
 				* STEP 5: LAYER ASSIGNMENT
@@ -236,7 +257,7 @@ void AExampleDioramaActor::GenerateDiorama()
 				* ResolveBlockIndex figures out which block type from BlockTypes should appear here.
 				* Cave voxels return INDEX_NONE (empty).
 				*/
-				const int32 BlockIndex = ResolveBlockIndex(ColumnHeight, GridZ, bIsCave, bIsBeachColumn, bIsSnowColumn);
+				const int32 BlockIndex = ResolveBlockIndex(ColumnHeight, GridZ, bIsCave, bIsCaveWall, bIsBeachColumn, bIsSnowColumn);
 
 				if (BlockIndex == INDEX_NONE)
 				{
@@ -262,7 +283,7 @@ void AExampleDioramaActor::GenerateDiorama()
 	UE_LOG(LogTemp, Log, TEXT("BiomeDioramaActor: Generation complete. Seed=%d  Size=%d x %d x %d"), NoiseSeed, SizeX, SizeY, SizeZ);
 }
 
-int32 AExampleDioramaActor::ResolveBlockIndex(const int32 ColumnHeight, const int32 BlockZ, const bool bIsCave, const bool bIsBeach, const bool bIsSnow) const
+int32 AExampleDioramaActor::ResolveBlockIndex(const int32 ColumnHeight, const int32 BlockZ, const bool bIsCave, const bool bIsCaveWall, const bool bIsBeach, const bool bIsSnow) const
 {
 	// Cave voxels are always empty air
 	if (bIsCave)
@@ -322,14 +343,16 @@ int32 AExampleDioramaActor::ResolveBlockIndex(const int32 ColumnHeight, const in
 		}
 	}
 
-	/**
-	* Deep block: stone or bedrock below the dirt layer.
-	* This is the most common block type and fills the bulk of the terrain.
-	*
-	* We also try CaveWall here as a decorative variant for blocks just below the surface inside cave zones but since we already returned for confirmed caves above,
-	* this only applies to narrow edge cases where the designer might want a transition material.
-	* Kept for extensibility.
-	*/
+	if (bIsCaveWall)
+	{
+		const int32 CaveWallIndex = FindBlockIndexByRole(EBiomeBlockRole::CaveWall);
+		if (CaveWallIndex != INDEX_NONE)
+		{
+			return CaveWallIndex;
+		}
+	}
+
+	// Deep blocks fill the remaining terrain below the subsurface band.
 	const int32 DeepIndex = FindBlockIndexByRole(EBiomeBlockRole::Deep);
 	if (DeepIndex != INDEX_NONE)
 	{

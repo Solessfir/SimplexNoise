@@ -19,6 +19,8 @@ Get `SimplexNoise.zip` from the [releases](https://github.com/Solessfir/SimplexN
 - **Blueprint-native** - all scalar functions are Blueprint Pure nodes with sensible defaults and clean category organisation
 - **Biome Diorama example** - a fully documented tutorial `AActor` that builds a voxel biome scene with caves, beaches, and snow peaks to showcase the noise functions in practice
 
+The corrected 4D gradient set changes 4D and 4D FBM values for existing seeds.
+
 ## Screenshots
 
 ![Example Screenshot](Resources/Screenshot_1.png)
@@ -107,6 +109,8 @@ USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_Batch(
 
 AVX + FMA support is checked at runtime on the first call and cached, so there is no repeated overhead. The `__attribute__((target("avx,fma")))` attribute on the SIMD kernel means AVX instructions are isolated to that one function - no project-wide `-mavx` flag is required.
 
+Non-FBM batch functions use the same Scale behavior as scalar sampling, including zero and negative values. Batch functions default to `[0, 1]`, while scalar functions default to `[-1, 1]`; pass the same explicit range when comparing results. SIMD results can differ by floating-point rounding.
+
 ## Example Content
 
 ### `ExampleDioramaActor`
@@ -120,6 +124,8 @@ A tutorial `AActor` that procedurally builds a small voxel biome scene made of 1
 2. Populate the `BlockTypes` array with your cube meshes - one entry per block appearance (Grass, Dirt, Stone, Sand, Snow, Cave Rock)
 3. Adjust `DioramaSize`, `NoiseSeed`, and the noise parameters in the Details panel
 4. Click **Generate Diorama** in the Details panel - click **Clear Diorama** to remove it and start over
+
+Generation and clearing mark the level for saving. Generated blocks inherit the actor's scale, including when regenerating an already-scaled actor. The optional `CaveWall` role replaces deep blocks bordering carved caves in any of the six face directions; surface and subsurface layers keep their usual roles. Without a valid CaveWall mesh, deep blocks retain their normal appearance.
 
 **What each noise function does inside the diorama:**
 
@@ -150,3 +156,7 @@ This implementation is adapted from the reference code by **Stefan Gustavson**, 
 
 If you need higher performance or more noise types (Cellular, Domain Warping, etc.), see:
 [UnrealFastNoise2](https://github.com/DoubleDeez/UnrealFastNoise2)
+
+## License
+
+Licensed under the [MIT License](LICENSE).

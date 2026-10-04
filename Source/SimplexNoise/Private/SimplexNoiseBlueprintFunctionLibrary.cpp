@@ -134,7 +134,7 @@ namespace
 		{
 			case 1: A = W; B = X; C = Y; break;
 			case 2: A = Z; B = W; C = X; break;
-			case 3: A = Y; B = W; C = Z; break;
+			case 3: A = X; B = Y; C = Z; break;
 			default: break;
 		}
 
@@ -370,7 +370,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_Internal(const doub
 	const int32 CellJ = FastFloor(Y + Skew);
 
 	// Unskew the cell origin back to regular (X, Y) space.
-	const double Unskew = static_cast<double>(CellI + CellJ) * G2;
+	const double Unskew = (static_cast<double>(CellI) + CellJ) * G2;
 	const double X0 = X - (static_cast<double>(CellI) - Unskew);
 	const double Y0 = Y - (static_cast<double>(CellJ) - Unskew);
 
@@ -459,7 +459,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise3D_Internal(const doub
 	const int32 CellK = FastFloor(Z + Skew);
 
 	// Unskew the cell origin back to regular (X, Y, Z) space.
-	const double Unskew = static_cast<double>(CellI + CellJ + CellK) * G3;
+	const double Unskew = (static_cast<double>(CellI) + CellJ + CellK) * G3;
 	const double X0 = X - (static_cast<double>(CellI) - Unskew);
 	const double Y0 = Y - (static_cast<double>(CellJ) - Unskew);
 	const double Z0 = Z - (static_cast<double>(CellK) - Unskew);
@@ -589,7 +589,7 @@ double USimplexNoiseBlueprintFunctionLibrary::SimplexNoise4D_Internal(const doub
 	const int32 CellL = FastFloor(W + Skew);
 
 	// Unskew the cell origin back to regular space.
-	const double Unskew = static_cast<double>(CellI + CellJ + CellK + CellL) * G4;
+	const double Unskew = (static_cast<double>(CellI) + CellJ + CellK + CellL) * G4;
 	const double X0 = X - (static_cast<double>(CellI) - Unskew);
 	const double Y0 = Y - (static_cast<double>(CellJ) - Unskew);
 	const double Z0 = Z - (static_cast<double>(CellK) - Unskew);
@@ -879,11 +879,9 @@ void USimplexNoiseBlueprintFunctionLibrary::SimplexNoise1D_Batch(TConstArrayView
 {
 	check(InX.Num() == OutValues.Num());
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
-
 	for (int32 Index = 0; Index < InX.Num(); ++Index)
 	{
-		OutValues[Index] = RemapToRange(SimplexNoise1D_Internal(InX[Index] * ClampedScale), MinRange, MaxRange);
+		OutValues[Index] = RemapToRange(SimplexNoise1D_Internal(InX[Index] * Scale), MinRange, MaxRange);
 	}
 }
 
@@ -892,7 +890,6 @@ void USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_Batch(TConstArrayView
 	check(InX.Num() == InY.Num() && InX.Num() == OutValues.Num());
 
 	const int32 Count = InX.Num();
-	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
 
 	// Scale the input coordinates before handing them to the compute function.
 	TArray<double> ScaledX;
@@ -902,8 +899,8 @@ void USimplexNoiseBlueprintFunctionLibrary::SimplexNoise2D_Batch(TConstArrayView
 
 	for (int32 Index = 0; Index < Count; ++Index)
 	{
-		ScaledX[Index] = InX[Index] * ClampedScale;
-		ScaledY[Index] = InY[Index] * ClampedScale;
+		ScaledX[Index] = InX[Index] * Scale;
+		ScaledY[Index] = InY[Index] * Scale;
 	}
 
 	// Evaluate raw [-1, 1] noise values (dispatches to SIMD where available).
@@ -920,11 +917,9 @@ void USimplexNoiseBlueprintFunctionLibrary::SimplexNoise3D_Batch(TConstArrayView
 {
 	check(InX.Num() == InY.Num() && InX.Num() == InZ.Num() && InX.Num() == OutValues.Num());
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
-
 	for (int32 Index = 0; Index < InX.Num(); ++Index)
 	{
-		OutValues[Index] = RemapToRange(SimplexNoise3D_Internal(InX[Index] * ClampedScale, InY[Index] * ClampedScale, InZ[Index] * ClampedScale), MinRange, MaxRange);
+		OutValues[Index] = RemapToRange(SimplexNoise3D_Internal(InX[Index] * Scale, InY[Index] * Scale, InZ[Index] * Scale), MinRange, MaxRange);
 	}
 }
 
@@ -932,11 +927,9 @@ void USimplexNoiseBlueprintFunctionLibrary::SimplexNoise4D_Batch(TConstArrayView
 {
 	check(InX.Num() == InY.Num() && InX.Num() == InZ.Num() && InX.Num() == InW.Num() && InX.Num() == OutValues.Num());
 
-	const double ClampedScale = FMath::Max<double>(Scale, UE_DOUBLE_SMALL_NUMBER);
-
 	for (int32 Index = 0; Index < InX.Num(); ++Index)
 	{
-		OutValues[Index] = RemapToRange(SimplexNoise4D_Internal(InX[Index] * ClampedScale, InY[Index] * ClampedScale, InZ[Index] * ClampedScale, InW[Index] * ClampedScale), MinRange, MaxRange);
+		OutValues[Index] = RemapToRange(SimplexNoise4D_Internal(InX[Index] * Scale, InY[Index] * Scale, InZ[Index] * Scale, InW[Index] * Scale), MinRange, MaxRange);
 	}
 }
 

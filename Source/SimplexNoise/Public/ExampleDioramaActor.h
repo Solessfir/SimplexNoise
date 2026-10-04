@@ -69,7 +69,7 @@ enum class EBiomeBlockRole : uint8
 	Deep        UMETA(DisplayName = "Deep (e.g. Stone)"),
 	Sand        UMETA(DisplayName = "Sand (Beach near sea level)"),
 	Snow        UMETA(DisplayName = "Snow (Mountain peaks)"),
-	CaveWall    UMETA(DisplayName = "Cave Wall (inside cave ceilings)"),
+	CaveWall    UMETA(DisplayName = "Cave Wall (borders carved caves)"),
 };
 
 /**
@@ -340,7 +340,7 @@ private:
 	* This is the core of the terrain layer logic. Reading this function is a
 	* good place to start when customizing block placement rules.
 	*/
-	int32 ResolveBlockIndex(int32 ColumnHeight, int32 BlockZ, bool bIsCave, bool bIsBeach, bool bIsSnow) const;
+	int32 ResolveBlockIndex(int32 ColumnHeight, int32 BlockZ, bool bIsCave, bool bIsCaveWall, bool bIsBeach, bool bIsSnow) const;
 
 	/**
 	* Returns the world-space transform for a block at integer grid position
